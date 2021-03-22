@@ -1,0 +1,58 @@
+Apuntes tp 1.1 SQL
+
+Las bases de datos las crearemos con SQL. 
+
+Actividad1.1.sql
+
+Creacion de base y tablas:
+
+1) debemos crear la base de datos - create database [db name] -
+2) debemos indicar que la utilizaremos - use [db name] -
+3) debemos crear las tablas con los N criterios que utilicemos
+
+	create table [table name](
+	[column name] [data type] [restrictions]
+	)
+
+data types:
+	- int, bigint, tinyint, smallint
+	- char, varchar, nchar, varnchar
+	- datetime, smalldatetime
+	- money, smallmoney
+	- etc...
+
+Restrictions:
+	- unique -> no se repiten valores en esa columna
+	- FK -> los valores de esa columna dependen de una columna referenciada
+	  a otra tabla
+	- PK -> estas serán irrepetibles y serán el eje de la tabla. Pueden ser
+	  compuestas por mas de una columna de la misma tabla
+	- checks -> indican una condicion que determina si podrá ser ingresado o 
+	  no el dato. ej: check (sueldo > 0)
+	- nullity -> indica si un valor es obligatorio o no (not null / null)
+
+Inserción de datos:
+
+* Tenemos dos formas de insertar datos dentro de TSQL:
+	
+	- Datos en columnas específicas:
+	
+	INSERT into [table name] values( value1, value2, value3, ...)
+	Esto insertará dentro de todas las columnas todos los valores que le pasemos
+	siempre y cuando haya tantos campos completos como columnas de la tabla.
+
+	- Datos en todas las columnas:	
+
+	INSERT into [table name](column1, column2, column3, ...)
+	values( value1, value2, value3, ...)
+	Esto insertará los valores dentro de las columnas específicas.
+
+Selección de datos: 
+	
+	- Datos de columnas específicas:
+	SELECT column1, column2, column3 FROM [table name]
+	Esto traerá las columnas específicas de la tabla especificada.
+
+	- Datos de todas las columnas:
+	SELECT * FROM [table name]
+	Esto traerá un paneo completo de todas las columnas de la tabla especificada.
