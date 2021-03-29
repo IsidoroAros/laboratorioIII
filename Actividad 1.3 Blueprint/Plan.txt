@@ -1,0 +1,105 @@
+Realizar un modelo l�gico en papel en el cual se identifiquen todas las entidades y c�mo se relacionan entre s�.
+Realizar un script en lenguaje TSQL que genere la siguiente base de datos con sus respectivas tablas y restricciones.
+Blueprint ser� un software dedicado a la gesti�n de proyectos a medida de todo tipo. En �l, 
+los administradores de proyectos ser�n capaces de poder registrar los proyectos, clientes, m�dulos, tareas, 
+colaboradores y dem�s elementos necesarios para la gesti�n de proyectos.
+
+En la primera etapa del desarrollo, el sistema requiere una base de datos en SQL Server Express que permita registrar 
+la informaci�n de los clientes y los proyectos. 
+
+El dise�o de la base de datos debe garantizar que:
+Un cliente pueda tener un c�digo autonum�rico que lo identifique.
+Un cliente deba tener una raz�n social y un CUIT. Este �ltimo no puede repetirse.
+Un cliente deba registrar un tipo de cliente y que el gestor de proyecto pueda definir los distintos tipos de clientes: "Estatal", 
+	"Multinacional", "Educativo privado", "Educativo p�blico", "Sin fines de lucro", etc.
+Un cliente pueda registrar un mail, tel�fono y celular de contacto.
+Un proyecto registre un nombre y pueda opcionalmente registrar una descripci�n larga.
+Un proyecto registre un ID que lo identifique.
+Un proyecto debe tener un cliente.
+Un cliente puede tener muchos proyectos.
+Dos o m�s clientes no pueden tener el mismo proyecto.
+Un proyecto debe contener una fecha de inicio y una fecha de fin. Aunque esta �ltima debe poder suministrarse tiempo despu�s de haber registrado el proyecto.
+Un proyecto debe registrar un costo estimado.
+Un proyecto debe contener una marca que defina si se encuentra vigente o cancelado.
+
+----------------------------------------------------------------------------------------------------------------
+
+Clientes(
+	ID PK identity(1,1)
+	Cuit unique
+	Razon social
+)
+
+Clientes_contacto(
+	ID PK FK references Clientes(ID)
+	mail
+	telefono
+	celular
+)
+
+Clientes_tipos(
+	ID PK FK references Clientes(ID)
+	Tipo de cliente -> "estatal", "multinacional", "ong" etc...
+)
+----------------------------------------------------------------------------
+
+Proyectos(
+	ID PK char(4)
+	Cliente FK references Clientes(ID) unique
+)
+
+Proyectos_info(
+	ID PK FK char(4) references Proyectos(ID)
+	Nombre
+	Descripcion
+)
+
+Proyectos_datos(
+	ID PK FK char(4) references Proyectos(ID)
+	Inicio
+	Fin null
+	Costo estimado
+	estado
+)
+-------------------------------------------------------------------------------
+Query backup:
+
+Create database Blueprint
+GO
+use Blueprint
+GO
+Create table Clientes(
+	ID int primary key not null identity(1,1),
+	Cuit char(13) not null unique
+)
+GO
+Create table Clientes_contacto(
+	ID int primary key foreign key references Clientes(ID) not null,
+	mail varchar(30) not null,
+	telefono varchar(20) null,
+	celular varchar(25) null
+)
+GO
+Create table Clientes_tipos(
+	ID int primary key foreign key references Clientes_contacto(ID) not null,
+	tipo varchar(50) not null
+)
+GO 
+Create table Proyectos(
+	ID char(4) primary key not null,
+	Cliente int foreign key references Clientes(ID) not null 
+)
+GO
+Create table Proyectos_main_info(
+	ID char(4) primary key foreign key references Proyectos(ID),
+	Nombre varchar(30) not null,
+	Descripcion text not null
+)
+GO
+Create table Proyectos_datos(
+	ID char(4) primary key foreign key references Proyectos_main_info(ID),
+	Inicio smalldatetime not null,
+	Fin smalldatetime null check( Fin > Inicio),
+	Costo_estimado money not null check(Costo_estimado > 0),
+	Estado bit not null
+)
