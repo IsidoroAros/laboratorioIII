@@ -77,7 +77,31 @@ select * from Clientes
 --select razonSocial, cuit, email, telefonoMovil, telefonoFijo from Clientes where (email is not null or TelefonoFijo is not null or telefonoMovil is not null)
 
 -- 25) Listado de razón social, cuit y mail. Si no dispone de mail debe aparecer el texto "Sin mail".
---select RazonSocial, Cuit, Email from Clientes Where Email in ('Sin Mail')
---FALTA TERMINAR
+	/*
+	---------- CASE 1 DE RESOLUCION ----------
+	select razonSocial, cuit, email,
+	case
+	when email is not null then email -> cuando si hay mail usar el mail original
+	when email is null then 'Sin mail'  -> cuando no hay mail agregar sin mail a la columna
+	end as Email
+	from Clientes 
+	*/
 
 -- 26) Listado de razón social, cuit y una columna llamada Contacto con el mail, si no posee mail, con el número de celular y si no posee número de celular con un texto que diga "Incontactable".
+/*
+select RazonSocial, Cuit, 
+case
+when email is null and telefonoMovil is null and telefonoMovil is null then 'Incontactable'
+when email is not null then email
+when telefonoMovil is not null then telefonoMovil
+when telefonoFijo is not null then telefonoFijo
+else 'Incontactable'
+end as 'Contacto'
+from clientes
+*/
+-- select RazonSocial, Cuit, isnull(email, isnull(telefonoMovil, isnull(telefonoFijo, 'Incontatable'))) as Contacto from Clientes
+
+-- Atajo sintáctico para manejo de nulos con coalesce.
+-- todas las columnas a evaluar deben ser del mismo tipo de dato
+select RazonSocial, Cuit, Coalesce(email, telefonoMovil, telefonoFijo, 'Incontactable') as Contacto
+From Clientes
