@@ -1,4 +1,4 @@
-USE [BluePrint]
+USE BluePrintActividad22
 GO
 SET IDENTITY_INSERT [dbo].[TiposCliente] ON 
 GO

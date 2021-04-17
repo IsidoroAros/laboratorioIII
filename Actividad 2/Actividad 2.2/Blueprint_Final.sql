@@ -1,7 +1,7 @@
-CREATE DATABASE BluePrint
+CREATE DATABASE BluePrintActividad22
 GO
 
-USE BluePrint
+USE BluePrintActividad22
 GO
 
 CREATE TABLE TiposCliente(
