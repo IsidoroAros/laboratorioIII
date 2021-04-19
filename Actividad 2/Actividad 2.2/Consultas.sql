@@ -109,7 +109,7 @@ Where Mod.FechaEstimadaFin > Mod.FechaFin and Pro.CostoEstimado > 100000
 --11 Listar nombre de proyectos, sin repetir, que registren módulos que hayan
 --finalizado antes que el tiempo estimado.
 
-SELECT Distinct Pro.Nombre FROM Proyectos as Pro 
+SELECT DISTINCT Pro.Nombre FROM Proyectos as Pro 
 JOIN Modulos as Mod ON Mod.IDProyecto = Pro.ID
 WHERE Mod.FechaFin < Mod.FechaEstimadaFin 
 
@@ -117,10 +117,12 @@ WHERE Mod.FechaFin < Mod.FechaEstimadaFin
 --12 Listar nombre de ciudades, sin repetir, que no registren clientes pero sí
 --colaboradores.
 
-SELECT Distinct Ciud.Nombre from Ciudades as Ciud -- Selecciono sin repetir de ciudades
-JOIN Clientes as Cli ON Cli.IDCiudad is null -- Donde los colaboradores tienen null
-JOIN Colaboradores as Colab ON Colab.IDCiudad = Ciud.ID -- Que coincidan el id ciudad con el de idCiud de Colab
-
+SELECT DISTINCT Ciud.Nombre from Ciudades as Ciud -- Selecciono sin repetir de ciudades
+JOIN Clientes as Cli ON Cli.IDCiudad is null -- Donde los clientes tienen null
+JOIN Colaboradores as Colab ON Colab.IDCiudad = Ciud.ID -- Ciud.ID coincidan el id ciudad con el de idCiud de Colab
+SELECT DISTINCT Ciud.Nombre from Ciudades as Ciud -- Selecciono sin repetir de ciudades
+JOIN Clientes as Cli ON Cli.IDCiudad is null -- Donde los clientes tienen null
+JOIN Colaboradores as Colab ON Colab.IDCiudad = Ciud.ID -- Ciud.ID coincidan el id ciudad con el de idCiud de Colab
 
 --13 Listar el nombre del proyecto y nombre de módulos de aquellos módulos que
 --contengan la palabra 'login' en su nombre o descripción.
@@ -136,7 +138,7 @@ WHERE Mod.Nombre like '%login%' OR Mod.Descripcion like '%login%'
 --'Programación' o 'Testing'. Ordenarlo por nombre de proyecto de manera
 --ascendente.
 
-SELECT Pro.Nombre as Proyecto, Colab.Nombre as Nombre, Colab.Apellido as Apellido
+SELECT Pro.Nombre as Proyecto, Colab.Nombre as Nombre, Colab.Apellido as Apellido, TT.Nombre as NombreTarea
 FROM Proyectos as PRO
 JOIN Modulos as Mod ON Mod.IDProyecto = Pro.ID
 JOIN Tareas as TA ON TA.IDModulo = Mod.ID
@@ -170,29 +172,68 @@ WHERE Colaciones.PrecioHora > (TT.PrecioHoraBase * 1.5)
 --16 Listar nombres y apellidos de las tres colaboraciones de colaboradores
 --externos que más hayan demorado en realizar alguna tarea cuyo nombre de
 --tipo de tarea contenga 'Testing'.
-SELECT TOP 3 Colab.Nombre as Nombre, Colab.Apellido as Apellido, Colaciones.Tiempo as Tiempo
+
+SELECT TOP 3 
+Colab.Apellido as Apellido, 
+Colab.Nombre as Nombre, 
+Colaciones.Tiempo as Tiempo
 FROM Colaboradores as Colab
 JOIN Colaboraciones as Colaciones ON Colab.ID = Colaciones.IDColaborador
 JOIN Tareas as Tar ON Colaciones.IDTarea = Tar.ID
 JOIN TiposTarea as TT ON Tar.IDTipo = TT.ID
-WHERE TT.Nombre like '%Testing%'
+WHERE TT.Nombre like '%Testing%' and Colab.Tipo = 'E'
 ORDER BY Tiempo DESC
--- Revisar, no da el data set correcto
 
 --17 Listar apellido, nombre y mail de los colaboradores argentinos que sean
 --internos y cuyo mail no contenga '.com'.
-SELECT Colab.Apellido as Apellido, Colab.Nombre as Nombre, Colab.EMail as Mail
+
+SELECT Colab.Apellido as Apellido,
+Colab.Nombre as Nombre,
+Colab.EMail as Mail
 FROM Colaboradores as Colab
 JOIN Ciudades as Ciud ON Colab.IDCiudad = Ciud.ID
 JOIN Paises as Pais ON Ciud.IDPais = Pais.ID
-WHERE Pais.Nombre = 'Argentina' AND Colab.Tipo = 'I'
--- Revisar
+WHERE Pais.Nombre = 'Argentina' AND Colab.Tipo = 'I' AND Colab.EMail not like '%.com%'
 
 
 --18 Listar nombre del proyecto, nombre del módulo y tipo de tarea de aquellas
 --tareas realizadas por colaboradores externos.
 
+SELECT 
+Pro.Nombre as Proyecto,
+Mod.Nombre as Modulo,
+TT.Nombre as TipoTarea
+FROM Proyectos as Pro
+JOIN Modulos as Mod ON Mod.IDProyecto = Pro.ID
+JOIN Tareas as Tar ON Tar.IDModulo = Mod.ID
+JOIN TiposTarea as TT ON Tar.IDTipo = TT.ID
+JOIN Colaboraciones as Colaciones ON Colaciones.IDTarea = TT.ID
+JOIN Colaboradores as Colab ON Colaciones.IDColaborador = Colab.ID
+WHERE Colab.Tipo = 'E'
+
 --19 Listar nombre de proyectos que no hayan registrado tareas.
+
+SELECT Pro.Nombre as Nombre
+From Proyectos as Pro 
+JOIN Modulos as Mod ON Mod.ID = Pro.ID
+JOIN Tareas as Tar ON Tar.IDModulo = Mod.ID
+WHERE Mod.IDProyecto is null
+
+-- Preguntar en clase
+
 
 --20 Listar apellidos y nombres, sin repeticiones, de aquellos colaboradores que
 --hayan trabajado en algún proyecto que aún no haya finalizado
+SELECT DISTINCT 
+Colab.Nombre as Nombre,
+Colab.Apellido as Apellido
+FROM Colaboradores as Colab
+
+JOIN Colaboraciones as Colaciones ON Colaciones.IDColaborador = Colab.ID
+JOIN Tareas as Tar ON Colaciones.IDTarea = Tar.ID
+JOIN Modulos as Mod ON Tar.IDModulo = Mod.ID
+JOIN Proyectos as Pro ON Mod.IDProyecto = Pro.ID
+
+WHERE Pro.FechaFin > GETDATE()
+
+-- Revisar
