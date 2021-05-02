@@ -1,0 +1,98 @@
+
+USE BluePrint
+GO
+
+-- 1. Listar los nombres de proyecto y costo estimado de aquellos proyectos cuyo costo estimado sea mayor al promedio de costos.
+Select Pro.Nombre, Pro.CostoEstimado 
+FROM Proyectos Pro
+where Pro.CostoEstimado > (Select AVG(Pro.CostoEstimado) PromedioCostos From Proyectos Pro) 
+
+
+-- 2. Listar razón social, cuit y contacto (email, celular o teléfono) de aquellos clientes que no tengan proyectos 
+-- que comiencen en el año 2020.
+SELECT CL.RazonSocial, CL.CUIT, COALESCE(CL.EMail, CL.Celular, CL.Telefono) AS Contacto, PR.FechaInicio FechaInicio, Pr.Nombre
+FROM Clientes CL
+JOIN Proyectos PR ON PR.IDCliente = CL.ID
+WHERE PR.FechaInicio NOT IN (SELECT PR.FechaInicio FROM Proyectos PR where YEAR(PR.FechaInicio) = '2020')
+
+-- 3. Listado de países que no tengan clientes relacionados.
+Select P.Nombre FROM Paises P where P.ID not in(
+    SELECT distinct P.ID From Paises P
+    JOIN Ciudades C ON C.IDPais = P.ID
+    JOIN Clientes Cli ON Cli.IDCiudad = C.ID
+)
+
+-- 4. Listado de proyectos que no tengan tareas registradas. 
+Select Pro.Nombre FROM Proyectos Pro WHERE Pro.ID not in (
+    SELECT distinct Pro.ID FROM Proyectos Pro 
+    JOIN Modulos Mod ON Mod.IDProyecto = Pro.ID
+    JOIN Tareas Tar ON Tar.IDModulo = Mod.ID
+)
+
+
+-- 5. Listado de tipos de tareas que no registren tareas pendientes.
+Select TT.Nombre FROM TiposTarea TT WHERE TT.ID not in(
+    Select distinct TT.id FROM TiposTarea TT
+    JOIN Tareas Tar ON TT.ID = Tar.IDTipo
+    WHERE Tar.FechaInicio is null 
+)
+
+-- 6. Listado con ID, nombre y costo estimado de proyectos cuyo costo estimado sea menor al costo estimado de 
+-- cualquier proyecto de clientes extranjeros (clientes que no sean de Argentina o no tengan asociado un país).
+SELECT Pro.Id ID, Pro.Nombre, Pro.CostoEstimado From Proyectos Pro 
+WHERE Pro.CostoEstimado < Any(
+    Select Proy.CostoEstimado EstimadoExtranjero
+    From Proyectos Proy
+       JOIN Clientes Cli ON Cli.ID = Proy.IDCliente
+       JOIN Ciudades Ciud ON Ciud.ID = Cli.IDCiudad
+       JOIN Paises Pais ON Pais.ID = Ciud.IDPais
+    WHERE Pais.Nombre not like 'Argentina' or Pais.Nombre is null
+)
+-- revisar
+
+
+-- 7. Listado de apellido y nombres de colaboradores que hayan demorado más en una tarea que el colaborador de la 
+-- ciudad de 'Buenos Aires' que más haya demorado.
+
+
+
+-- 8. Listado de clientes indicando razón social, nombre del país (si tiene) y cantidad de 
+-- proyectos comenzados y cantidad de proyectos por comenzar.
+SELECT Cli.razonSocial RazonSocial From Clientes Cli, 
+    (select P.Nombre From Paises P) Paises,
+    (select Count(Pro.FechaInicio >= GETDATE()) FROM Proyectos Pro) Iniciados,
+    (select Count(Pro.FechaInicio < GETDATE()) FROM Proyectos Pro) NoIniciados,
+    
+
+
+-- 9. Listado de tareas indicando nombre del módulo, nombre del tipo de tarea, cantidad de colaboradores externos que 
+-- la realizaron y cantidad de colaboradores internos que la realizaron.
+
+-- 10. Listado de proyectos indicando nombre del proyecto, costo estimado, cantidad de módulos cuya estimación de fin haya sido exacta, cantidad de módulos con estimación adelantada y cantidad de módulos con estimación demorada.
+-- Adelantada →  estimación de fin haya sido inferior a la real.
+-- Demorada   →  estimación de fin haya sido superior a la real.
+
+-- 11. Listado con nombre del tipo de tarea y total abonado en concepto de honorarios para colaboradores internos y total abonado en concepto de honorarios para colaboradores externos.
+
+-- 12. Listado con nombre del proyecto, razón social del cliente y saldo final del proyecto. El saldo final surge de la siguiente fórmula: 
+-- Costo estimado - Σ(HCE) - Σ(HCI) * 0.1
+-- Siendo HCE → Honorarios de colaboradores externos y HCI → Honorarios de colaboradores internos.
+
+-- 13. Para cada módulo listar el nombre del proyecto, el nombre del módulo, el total en tiempo que demoraron las tareas 
+-- de ese módulo y qué porcentaje de tiempo representaron las tareas de ese módulo en relación al tiempo total de tareas del proyecto.
+
+-- 14. Por cada colaborador indicar el apellido, el nombre, 'Interno' o 'Externo' según su tipo y la cantidad de tareas de tipo 'Testing' que haya realizado y la cantidad de tareas de tipo 'Programación' que haya realizado.
+-- NOTA: Se consideran tareas de tipo 'Testing' a las tareas que contengan la palabra 'Testing' en su nombre. Ídem para Programación.
+
+-- 15. Listado apellido y nombres de los colaboradores que no hayan realizado tareas de 'Diseño de base de datos'.
+
+-- 16. Por cada país listar el nombre, la cantidad de clientes y la cantidad de colaboradores.
+
+-- 17. Listar por cada país el nombre, la cantidad de clientes y la cantidad de colaboradores de aquellos países que no tengan clientes pero sí colaboradores.
+
+-- 18. Listar apellidos y nombres de los colaboradores internos que hayan realizado más tareas de tipo 'Testing' que tareas de tipo 'Programación'.
+
+-- 19. Listar los nombres de los tipos de tareas que hayan abonado más del cuádruple en colaboradores internos que externos
+
+-- 20. Listar los proyectos que hayan registrado igual cantidad de estimaciones demoradas que adelantadas y que al menos hayan registrado alguna estimación adelantada y que no hayan registrado ninguna estimación exacta.
+
