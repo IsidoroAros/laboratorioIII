@@ -50,19 +50,28 @@ WHERE Pro.CostoEstimado < Any(
 )
 -- revisar
 
-
 -- 7. Listado de apellido y nombres de colaboradores que hayan demorado más en una tarea que el colaborador de la 
 -- ciudad de 'Buenos Aires' que más haya demorado.
-
+SELECT Col.Nombre, Col.Apellido
+From Colaboradores Col
+JOIN Colaboraciones Colacion ON Col.ID = Colacion.IDColaborador
+WHERE Col.ID in
+    (Select MAX(Colacion.Tiempo) Tiempo From Colaboraciones Colacion 
+    JOIN Colaboradores Col ON Colacion.IDColaborador = Col.ID
+    JOIN Ciudades Ciud ON Ciud.ID = Col.IDCiudad
+    WHERE Col.IDCiudad = 1)
 
 
 -- 8. Listado de clientes indicando razón social, nombre del país (si tiene) y cantidad de 
 -- proyectos comenzados y cantidad de proyectos por comenzar.
-SELECT Cli.razonSocial RazonSocial From Clientes Cli, 
-    (select P.Nombre From Paises P) Paises,
-    (select Count(Pro.FechaInicio >= GETDATE()) FROM Proyectos Pro) Iniciados,
-    (select Count(Pro.FechaInicio < GETDATE()) FROM Proyectos Pro) NoIniciados,
-    
+SELECT CL.RazonSocial, P.Nombre, 
+    (SELECT COUNT(*) FROM Proyectos PR
+    WHERE PR.FechaInicio <= GETDATE() AND PR.IDCliente = CL.ID) AS comenzado, 
+    (SELECT COUNT(*) FROM Proyectos PR 
+    WHERE PR.FechaInicio > GETDATE() AND PR.IDCliente = CL.ID) AS PORCOMENZAR 
+FROM Clientes CL
+INNER JOIN Ciudades C ON C.ID = CL.IDCiudad
+INNER JOIN Paises P ON P.ID = C.IDPais
 
 
 -- 9. Listado de tareas indicando nombre del módulo, nombre del tipo de tarea, cantidad de colaboradores externos que 
