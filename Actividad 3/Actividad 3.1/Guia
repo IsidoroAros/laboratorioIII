@@ -1,0 +1,190 @@
+-- 1) Hacer un reporte que liste por cada tipo de tarea se liste el nombre, el precio de hora base y el promedio de valor hora real (obtenido de las colaboraciones). 
+
+GO
+DROP VIEW VW_PRECIOSHORA AS
+SELECT TT.Nombre, TT.PrecioHoraBase,
+(
+    SELECT AVG(CC.PrecioHora) FROM Colaboraciones CC
+    JOIN Tareas Tar ON Tar.ID = CC.IDTarea
+    WHERE Tar.IDTipo = TT.ID
+) Promedio
+FROM TiposTarea TT
+
+GO
+SELECT * FROM VW_PRECIOSHORA
+
+GO
+DROP VIEW VW_PRECIOSHORA_SEGUNDA AS
+SELECT DISTINCT TT.Nombre, TT.PrecioHoraBase, AVG(CB.PrecioHora) Promedio
+FROM TiposTarea TT
+    JOIN Tareas Tar ON Tar.IDTipo = TT.ID
+    JOIN Colaboraciones CB ON CB.IDTarea = Tar.ID
+WHERE CB.IDTarea = Tar.ID
+GROUP BY TT.Nombre, TT.PrecioHoraBase
+
+GO
+SELECT * FROM VW_PRECIOSHORA_SEGUNDA
+
+-- 2) Modificar el reporte de (1) para que también liste una columna llamada Variación con las siguientes reglas:
+-- Poca → Si la diferencia entre el promedio y el precio de hora base es menor a $500.
+-- Mediana → Si la diferencia entre el promedio y el precio de hora base está entre $501 y $999.
+-- Alta → Si la diferencia entre el promedio y el precio de hora base es $1000 o más.
+GO
+
+DROP VIEW VW_PRECIOS_TIPOS_TAREAS AS
+SELECT DISTINCT TT.Nombre, TT.PrecioHoraBase, AVG(CB.PrecioHora) Promedio,
+CASE 
+    WHEN (AVG(CB.PrecioHora) - TT.PrecioHoraBase) <= 500 THEN 'Baja'
+    WHEN (AVG(CB.PrecioHora) - TT.PrecioHoraBase) > 500 AND (AVG(CB.PrecioHora) - TT.PrecioHoraBase) < 1000 THEN 'Media'
+    WHEN (AVG(CB.PrecioHora) - TT.PrecioHoraBase) >= 1000 THEN 'Alta'
+END AS 'Variacion'
+FROM TiposTarea TT
+    JOIN Tareas Tar ON Tar.IDTipo = TT.ID
+    JOIN Colaboraciones CB ON CB.IDTarea = Tar.ID
+WHERE CB.IDTarea = Tar.ID
+GROUP BY TT.Nombre, TT.PrecioHoraBase
+
+GO
+SELECT * FROM VW_PRECIOS_TIPOS_TAREAS
+
+-- 3) Crear un procedimiento almacenado que liste las colaboraciones de un colaborador cuyo ID se envía como parámetro.
+
+GO
+
+DROP PROCEDURE SP_COLABORACIONES_ID(
+    @ID_Cliente int
+)
+AS BEGIN
+    SELECT CC.IDTarea, CC.Tiempo, CC.PrecioHora 
+    FROM Colaboraciones CC
+    JOIN Colaboradores CB ON CC.IDColaborador = CB.ID
+    WHERE CB.ID = @ID_Cliente
+END
+
+GO
+
+EXEC SP_COLABORACIONES_ID 1
+EXEC SP_COLABORACIONES_ID 2
+EXEC SP_COLABORACIONES_ID 3
+EXEC SP_COLABORACIONES_ID 4
+
+-- 4) Hacer una vista que liste por cada colaborador el apellido y nombre, el nombre del tipo (Interno o Externo) y la cantidad de proyectos distintos en los que haya trabajado.
+-- Opcional: Hacer una aplicación en C# (consola, escritorio o web) que consuma la vista y la muestre por pantalla.
+
+GO
+
+DROP VIEW VW_COLABORACIONES_X_COLABORADOR
+AS
+SELECT CB.Nombre, CB.Apellido, CB.Tipo, 
+(
+    SELECT COUNT(*) FROM Colaboraciones CC
+    WHERE CC.IDColaborador = CB.ID
+) CANTIDAD_COLABORACIONES
+FROM Colaboradores CB
+
+GO
+SELECT * FROM VW_COLABORACIONES_X_COLABORADOR
+
+GO
+
+DROP VIEW VW_COLABORACIONES_X_COLABORADOR
+AS
+SELECT CB.Nombre, CB.Apellido, CB.Tipo, COUNT(CC.IDColaborador) COLABORACIONES
+FROM Colaboradores CB
+JOIN Colaboraciones CC ON CC.IDColaborador = CB.ID
+WHERE CB.ID = CC.IDColaborador
+GROUP BY CB.Nombre, CB.APELLIDO, CB.Tipo
+
+GO
+SELECT * FROM VW_COLABORACIONES_X_COLABORADOR
+
+
+-- 5) Hacer un procedimiento almacenado que reciba dos fechas como parámetro y liste todos los datos de los proyectos que se encuentren entre esas fechas.
+GO
+
+DROP PROCEDURE SP_PROYECTOS_ENTRE(
+    @Inicio DATE,
+    @Fin DATE
+)AS
+SELECT * FROM Proyectos Pro
+WHERE Pro.FechaInicio BETWEEN @Inicio AND @Fin
+
+GO
+EXEC SP_PROYECTOS_ENTRE '2019-1-1', '2020-1-1'
+
+-- 6) Hacer un procedimiento almacenado que reciba un ID de Cliente, un ID de Tipo de contacto y un valor y modifique los datos de contacto de dicho cliente. El ID de Tipo de contacto puede ser: 1 - Email, 2 - Teléfono y 3 - Celular.
+GO
+
+DROP PROCEDURE SP_MODIFICAR_CLIENTES(
+    @IDCliente int,
+    @TipoContacto int,
+    @Valor varchar(30)
+) AS BEGIN
+    IF(@TipoContacto = 1) BEGIN UPDATE Clientes SET EMail = @Valor WHERE Clientes.ID = @IDCliente END
+    IF(@TipoContacto = 2) BEGIN UPDATE Clientes SET Telefono = @Valor WHERE Clientes.ID = @IDCliente END
+    IF(@TipoContacto = 3) BEGIN UPDATE Clientes SET Celular = @Valor WHERE Clientes.ID = @IDCliente END
+END 
+
+EXEC SP_MODIFICAR_CLIENTES 2, 1, '1156592131'
+
+
+GO
+SELECT * FROM Clientes
+
+-- 7) Hacer un procedimiento almacenado que reciba un ID de Módulo y realice la baja lógica tanto del módulo como de todas sus tareas futuras. Utilizar una transacción para realizar el proceso de manera atómica.
+GO
+
+-- DAR DE BAJA SIN TRANSACCION
+DROP PROCEDURE SP_BAJA_MODULO_Y_TAREAS(
+    @IdModulo int
+) AS BEGIN
+    UPDATE Tareas SET Estado = 0
+    WHERE Tareas.IDModulo = @IdModulo
+    UPDATE Modulos SET Estado = 0
+    WHERE Modulos.ID = @IdModulo
+END
+
+GO
+
+EXEC SP_BAJA_MODULO_Y_TAREAS 1
+
+SELECT * FROM Modulos WHERE Modulos.ID = 1
+SELECT * FROM Tareas WHERE Tareas.IDModulo = 1
+
+GO
+
+-- VOLVER A DAR DE ALTA
+DROP PROCEDURE SP_ALTA_MODULO_Y_TAREAS(
+    @IdModulo int
+) AS BEGIN
+    UPDATE Tareas SET Estado = 1
+    WHERE Tareas.IDModulo = @IdModulo
+    UPDATE Modulos SET Estado = 1
+    WHERE Modulos.ID = @IdModulo
+END
+
+EXEC SP_ALTA_MODULO_Y_TAREAS 1
+
+SELECT * FROM Modulos WHERE Modulos.ID = 1
+SELECT * FROM Tareas WHERE Tareas.IDModulo = 1
+
+GO
+
+CREATE PROCEDURE SP_BAJA_MODULO_Y_TAREAS_TRANSACCION(
+    @IdModulo int
+) AS BEGIN
+    BEGIN TRY
+        BEGIN TRANSACTION
+            UPDATE Tareas SET Estado = 0
+            WHERE Tareas.IDModulo = @IdModulo
+            UPDATE Modulos SET Estado = 0
+            WHERE Modulos.ID = @IdModulo
+        COMMIT TRANSACTION
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION
+        RAISERROR('NO HERMANO, LA CAGASTE FEO', 16, 1)
+    END CATCH
+END
+
+GO
