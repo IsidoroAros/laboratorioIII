@@ -1,0 +1,13 @@
+---------------------------- TRIGGERS ----------------------------
+
+Los triggers nos sirven para ejecutar una acción ante un estímulo determinado dentro de la base de datos. Son desencadenadores ya que las sentencias SQL o el procedimiento se ejecutará luego de un evento determinado.
+Se dividen en 2:
+
+- DML (Data Manipulation): Pueden ser "Instead of" o "After" de alguna acción en una tabla en particular. Se ejecutan cuando un usuario realiza alguna acción sobre una tabla de tipo INSERT, UPDATE o DELETE. Tipos de triggers DML:
+
+    - After: Las acciones que conforman el trigger se ejecutan luego de un INSERT, UPDATE O DELETE
+
+    - Instead of: Las acciones que conforman el trigger se ejecutan en lugar de la acción INSERT, UPDATE o DELETE que lo dispara
+
+- DDL (Data definition): Pueden ser 'PARA' una acción sobre la base de datos.
+

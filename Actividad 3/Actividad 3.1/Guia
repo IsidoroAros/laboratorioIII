@@ -1,7 +1,7 @@
 -- 1) Hacer un reporte que liste por cada tipo de tarea se liste el nombre, el precio de hora base y el promedio de valor hora real (obtenido de las colaboraciones). 
 
 GO
-DROP VIEW VW_PRECIOSHORA AS
+CREATE VIEW VW_PRECIOSHORA AS
 SELECT TT.Nombre, TT.PrecioHoraBase,
 (
     SELECT AVG(CC.PrecioHora) FROM Colaboraciones CC
@@ -14,7 +14,7 @@ GO
 SELECT * FROM VW_PRECIOSHORA
 
 GO
-DROP VIEW VW_PRECIOSHORA_SEGUNDA AS
+CREATE VIEW VW_PRECIOSHORA_SEGUNDA AS
 SELECT DISTINCT TT.Nombre, TT.PrecioHoraBase, AVG(CB.PrecioHora) Promedio
 FROM TiposTarea TT
     JOIN Tareas Tar ON Tar.IDTipo = TT.ID
@@ -31,7 +31,7 @@ SELECT * FROM VW_PRECIOSHORA_SEGUNDA
 -- Alta → Si la diferencia entre el promedio y el precio de hora base es $1000 o más.
 GO
 
-DROP VIEW VW_PRECIOS_TIPOS_TAREAS AS
+CREATE VIEW VW_PRECIOS_TIPOS_TAREAS AS
 SELECT DISTINCT TT.Nombre, TT.PrecioHoraBase, AVG(CB.PrecioHora) Promedio,
 CASE 
     WHEN (AVG(CB.PrecioHora) - TT.PrecioHoraBase) <= 500 THEN 'Baja'
@@ -51,7 +51,7 @@ SELECT * FROM VW_PRECIOS_TIPOS_TAREAS
 
 GO
 
-DROP PROCEDURE SP_COLABORACIONES_ID(
+CREATE PROCEDURE SP_COLABORACIONES_ID(
     @ID_Cliente int
 )
 AS BEGIN
@@ -73,7 +73,7 @@ EXEC SP_COLABORACIONES_ID 4
 
 GO
 
-DROP VIEW VW_COLABORACIONES_X_COLABORADOR
+CREATE VIEW VW_COLABORACIONES_X_COLABORADOR
 AS
 SELECT CB.Nombre, CB.Apellido, CB.Tipo, 
 (
@@ -87,7 +87,7 @@ SELECT * FROM VW_COLABORACIONES_X_COLABORADOR
 
 GO
 
-DROP VIEW VW_COLABORACIONES_X_COLABORADOR
+CREATE VIEW VW_COLABORACIONES_X_COLABORADOR
 AS
 SELECT CB.Nombre, CB.Apellido, CB.Tipo, COUNT(CC.IDColaborador) COLABORACIONES
 FROM Colaboradores CB
@@ -102,7 +102,7 @@ SELECT * FROM VW_COLABORACIONES_X_COLABORADOR
 -- 5) Hacer un procedimiento almacenado que reciba dos fechas como parámetro y liste todos los datos de los proyectos que se encuentren entre esas fechas.
 GO
 
-DROP PROCEDURE SP_PROYECTOS_ENTRE(
+CREATE PROCEDURE SP_PROYECTOS_ENTRE(
     @Inicio DATE,
     @Fin DATE
 )AS
@@ -115,7 +115,7 @@ EXEC SP_PROYECTOS_ENTRE '2019-1-1', '2020-1-1'
 -- 6) Hacer un procedimiento almacenado que reciba un ID de Cliente, un ID de Tipo de contacto y un valor y modifique los datos de contacto de dicho cliente. El ID de Tipo de contacto puede ser: 1 - Email, 2 - Teléfono y 3 - Celular.
 GO
 
-DROP PROCEDURE SP_MODIFICAR_CLIENTES(
+CREATE PROCEDURE SP_MODIFICAR_CLIENTES(
     @IDCliente int,
     @TipoContacto int,
     @Valor varchar(30)
@@ -135,7 +135,7 @@ SELECT * FROM Clientes
 GO
 
 -- DAR DE BAJA SIN TRANSACCION
-DROP PROCEDURE SP_BAJA_MODULO_Y_TAREAS(
+CREATE PROCEDURE SP_BAJA_MODULO_Y_TAREAS(
     @IdModulo int
 ) AS BEGIN
     UPDATE Tareas SET Estado = 0
@@ -154,7 +154,7 @@ SELECT * FROM Tareas WHERE Tareas.IDModulo = 1
 GO
 
 -- VOLVER A DAR DE ALTA
-DROP PROCEDURE SP_ALTA_MODULO_Y_TAREAS(
+CREATE PROCEDURE SP_ALTA_MODULO_Y_TAREAS(
     @IdModulo int
 ) AS BEGIN
     UPDATE Tareas SET Estado = 1
