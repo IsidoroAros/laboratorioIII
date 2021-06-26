@@ -113,16 +113,9 @@ SELECT @TiposTarea = TT.Nombre FROM TiposTarea TT
 IF(@TiposTarea LIKE '%Programación%')
 -- SE INSERTAN DOS TAREAS DE TESTING UNITARIO Y DE INTEGRACION CON FECHA NULL
     BEGIN
-        -- INSERT INTO Colaboraciones(IDTarea, IDColaborador, Tiempo, PrecioHora, Estado) 
-        --     VALUES(@IdTarea, ???, 4, ???, 1) que colaborador va?
         INSERT INTO Tareas(IDModulo,IDTipo,FechaInicio,FechaFin,Estado) VALUES(@Modulo, 10, NULL, NULL, 1)
         INSERT INTO Tareas(IDModulo,IDTipo,FechaInicio,FechaFin,Estado) VALUES(@Modulo, 11, NULL, NULL, 1)
     END
--- SE CALCULA EL COSTO ESTIMADO DE LA TAREA
--- DECLARE @CostoDeTarea MONEY
--- SELECT @CostoDeTarea = TiposTarea.PrecioHoraBase * Colaboraciones.Tiempo FROM TiposTarea
---         JOIN Tareas ON
--- PRINT('')
 END
 GO
 
@@ -132,7 +125,8 @@ SELECT * FROM Tareas
 SELECT * FROM Colaboraciones
 
 
--- 4) Hacer un trigger que al borrar una tarea realice una baja lógica de la misma en lugar de una baja física.
+-- 4) Hacer un trigger que al borrar una tarea realice una baja lógica de la misma en lugar de una baja
+-- física.
 
 -- OPCIÓN QUE MODIFICA UN ÚNICO REGISTRO
 GO
@@ -161,7 +155,8 @@ DELETE FROM Tareas WHERE TAREAS.ID = 90
 DISABLE TRIGGER TR_PUNTO_CUATRO ON TAREAS
 
 
--- 5) Hacer un trigger que al borrar un módulo realice una baja lógica del mismo en lugar de una baja física. Además, debe borrar todas las tareas asociadas al módulo.
+-- 5) Hacer un trigger que al borrar un módulo realice una baja lógica del mismo en lugar de una baja física.
+-- Además, debe borrar todas las tareas asociadas al módulo.
 GO
 DROP TRIGGER TR_PUNTO_CINCO ON MODULOS
 INSTEAD OF DELETE
@@ -187,15 +182,60 @@ SELECT * FROM TAREAS WHERE IDModulo = 20
 DELETE FROM Modulos WHERE ID = 20
 
 
+-- 6) Hacer un trigger que al borrar un proyecto realice una baja lógica del mismo en lugar de una baja 
+-- física. Además, debe borrar todas los módulos asociados al proyecto.
+GO
+DISABLE TRIGGER TR_PUNTO_SEIS ON PROYECTOS
+INSTEAD OF DELETE
+AS BEGIN
+	DECLARE @ID VARCHAR(5)
+	SELECT @ID = ID FROM DELETED
+	UPDATE Proyectos SET ESTADO = 0 WHERE PROYECTOS.ID = @ID
+	DELETE FROM MODULOS WHERE MODULOS.IDProyecto = @ID
+	-- DELETE FROM MODULOS WHERE MODULOS.IDProyecto IN (SELECT ID FROM PROYECTOS WHERE PROYECTOS.ID = @ID)
+END
+GO
 
--- 6) Hacer un trigger que al borrar un proyecto realice una baja lógica del mismo en lugar de una baja física. Además, debe borrar todas los módulos asociados al proyecto.
+SELECT * FROM PROYECTOS WHERE ID = 'Z111'
+SELECT * FROM MODULOS WHERE IDProyecto = 'Z111'
+
+DELETE FROM PROYECTOS WHERE ID = 'Z111'
+
+-- 7) Hacer un trigger que si se agrega una tarea cuya fecha de fin es mayor a la fecha estimada de fin del 
+-- módulo asociado a la tarea entonces se modifique la fecha estimada de fin en el módulo.
+GO
+DISABLE TRIGGER TR_PUNTO_SIETE ON TAREAS
+AFTER INSERT
+AS BEGIN
+	DECLARE @FECHATAREA DATE
+	DECLARE @IDMODULO INT
+	DECLARE @FECHAESTIMADAMOD DATE
+
+	SELECT @FECHATAREA = FECHAFIN FROM INSERTED
+	SELECT @IDMODULO = IDModulo FROM INSERTED
+	SELECT @FECHAESTIMADAMOD = (SELECT FechaEstimadaFin FROM MODULOS WHERE MODULOS.ID = @IDMODULO)
+
+	IF(@FECHATAREA > @FECHAESTIMADAMOD)
+	BEGIN
+		--UPDATE Tareas SET FechaFin = @FECHAESTIMADAMOD WHERE TAREAS.ID = (SELECT ID FROM INSERTED)
+		UPDATE MODULOS SET FechaEstimadaFin = @FECHATAREA WHERE MODULOS.ID = (SELECT IDMODULO FROM INSERTED)
+	END
+END
+GO
+
+SELECT * FROM TAREAS
+SELECT * FROM MODULOS WHERE ID = 16
 
 
+-- 8) Hacer un trigger que al borrar una tarea que previamente se ha dado de baja lógica realice la baja 
+-- física de la misma.
+GO
+CREATE TRIGGER TR_PUNTO_OCHO
+AFTER DELETE
+BEGIN AS
+END
+GO
 
-
--- 7) Hacer un trigger que si se agrega una tarea cuya fecha de fin es mayor a la fecha estimada de fin del módulo asociado a la tarea entonces se modifique la fecha estimada de fin en el módulo.
-
--- 8) Hacer un trigger que al borrar una tarea que previamente se ha dado de baja lógica realice la baja física de la misma.
 
 -- 9) Hacer un trigger que al ingresar una colaboración no permita que el colaborador/a superponga las fechas con las de otras colaboraciones que se les hayan asignado anteriormente. En caso contrario, registrar la colaboración sino generar un error con un mensaje aclaratorio.
 
